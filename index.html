@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetMind — AI Meeting Assistant & Commitment Tracker</title>
+  <meta name="description"
+    content="AI meeting workspace with speech-to-text, detailed audio timestamps, interactive commitment tracker checklist, and local intelligence.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <span class="logo-icon">🎙️</span>
+        </div>
+        <div class="brand-text">
+          <h1>MeetMind</h1>
+          <span>AI Meeting Intelligence</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="navigation" role="tablist">
+        <button type="button" class="nav-item active" data-tab="dashboard" role="tab" aria-selected="true"
+          id="navDashboard">
+          <span class="nav-icon">⌂</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="studio" role="tab" aria-selected="false" id="navStudio">
+          <span class="nav-icon">📄</span>
+          <span class="nav-label">Full Transcript</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="tracker" role="tab" aria-selected="false" id="navTracker">
+          <span class="nav-icon">☑</span>
+          <span class="nav-label">Commitment Tracker</span>
+          <span class="nav-badge" id="navCommitmentCount" title="Active commitments">0</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="assistant" role="tab" aria-selected="false" id="navAssistant">
+          <span class="nav-icon">🎙️</span>
+          <span class="nav-label">AI Assistant</span>
+        </button>
+      </nav>
+
+      <!-- Meeting Selector -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <span>SAVED MEETINGS</span>
+          <button type="button" class="icon-tiny-btn" id="newMeetingBtn" title="Start New Meeting">+</button>
+        </div>
+        <div class="meeting-history-list" id="meetingsHistory">
+          <!-- Injected via JS -->
+        </div>
+        <button type="button" class="demo-btn" id="loadDemoBtn">
+          <span>⚡</span> Load Sample Meeting
+        </button>
+      </div>
+
+      <!-- System Status & Model info -->
+      <div class="sidebar-bottom">
+        <div class="local-status">
+          <div class="status-dot online" id="statusDot"></div>
+          <div>
+            <strong id="statusModel">Whisper Base · Ready</strong>
+            <span id="statusSub">Local AI Offline Fallback Active</span>
+          </div>
+        </div>
+        <div class="privacy-note">
+          <span>🔒</span>
+          <p>100% On-Device: Audio transcribed and commitments processed locally.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main class="main">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">INTELLIGENT WORKSPACE</p>
+          <h2 id="topMeetingTitle">Meeting Intelligence Hub</h2>
+        </div>
+
+        <div class="header-actions">
+          <!-- Audio Mini Status -->
+          <div class="audio-status-pill" id="audioPill" hidden>
+            <span class="sound-wave-icon">♪</span>
+            <span id="audioPillText">Audio Loaded</span>
+          </div>
+
+          <div class="connection" id="systemReadyBadge">
+            <span class="status-dot"></span>
+            <span id="connectionText">Whisper Ready</span>
+          </div>
+
+          <div class="profile" title="Current User">P</div>
+        </div>
+      </header>
+
+      <!-- Audio Player Bar (Global Sticky / Visible when audio is loaded) -->
+      <section class="player-bar glass-card" id="playerBar" hidden>
+        <div class="player-info">
+          <div class="player-cover">♪</div>
+          <div class="player-text">
+            <strong id="playerTitle">Meeting Recording</strong>
+            <span id="playerDuration">00:00 / 00:00</span>
+          </div>
+        </div>
+
+        <div class="player-controls">
+          <button type="button" class="player-btn jump-btn" id="seekBackBtn" title="Rewind 5 seconds">-5s</button>
+          <button type="button" class="player-btn play-btn" id="mainPlayBtn" title="Play / Pause (Spacebar)">
+            <span id="playIcon">▶</span>
+          </button>
+          <button type="button" class="player-btn jump-btn" id="seekFwdBtn" title="Forward 5 seconds">+5s</button>
+
+          <div class="scrub-wrapper">
+            <span class="time-label" id="currentTimeLabel">00:00</span>
+            <input type="range" class="scrub-slider" id="audioScrubber" min="0" max="100" value="0" step="0.1">
+            <span class="time-label" id="totalDurationLabel">00:00</span>
+          </div>
+        </div>
+
+        <div class="player-options">
+          <!-- Speed chips -->
+          <div class="speed-selector">
+            <button type="button" class="speed-btn active" data-speed="1">1x</button>
+            <button type="button" class="speed-btn" data-speed="1.25">1.25x</button>
+            <button type="button" class="speed-btn" data-speed="1.5">1.5x</button>
+            <button type="button" class="speed-btn" data-speed="2">2x</button>
+          </div>
+
+          <!-- Volume -->
+          <div class="volume-control">
+            <button type="button" class="vol-btn" id="muteBtn" title="Mute/Unmute">🔊</button>
+            <input type="range" class="vol-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 1: DASHBOARD ================= -->
+      <section class="view-panel active" id="viewDashboard">
+        <div class="dashboard">
+
+          <!-- Upload & Live Record Card -->
+          <div class="upload-card glass-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">INPUT SOURCE</p>
+                <h3>Add Meeting Audio</h3>
+                <p class="muted">
+                  Upload a recorded meeting or capture live audio directly with your microphone.
+                </p>
+              </div>
+              <div class="mode-tabs">
+                <button type="button" class="mode-tab active" id="modeUploadTab">Upload File</button>
+                <button type="button" class="mode-tab" id="modeRecordTab">🎤 Live Mic</button>
+              </div>
+            </div>
+
+            <!-- Mode 1: File Drop Zone -->
+            <div class="upload-mode-container" id="uploadMode">
+              <div class="drop-zone" id="dropZone">
+                <div class="upload-icon">↑</div>
+                <h4>Drop your meeting recording here</h4>
+                <p>or choose a file from your computer</p>
+                <label class="choose-btn" for="audioFile">Choose Audio / Video File</label>
+                <input type="file" id="audioFile" accept="audio/*,video/*" hidden>
+                <div class="supported">MP3 · WAV · M4A · OGG · WEBM · MP4</div>
+              </div>
+
+              <div class="selected-file" id="selectedFile" hidden>
+                <div class="file-icon">♪</div>
+                <div class="file-info">
+                  <strong id="fileName">meeting-recording.mp3</strong>
+                  <span id="fileSize">0 MB</span>
+                </div>
+                <button type="button" class="remove-btn" id="removeFile" aria-label="Remove file">×</button>
+              </div>
+            </div>
+
+            <!-- Mode 2: In-Browser Live Mic Recorder -->
+            <div class="record-mode-container" id="recordMode" hidden>
+              <div class="recorder-box">
+                <canvas id="recordVisualizer" width="450" height="70"></canvas>
+                <div class="record-timer" id="recordTimer">00:00:00</div>
+                <p class="record-hint" id="recordHint">Click Start to record the meeting with your microphone</p>
+
+                <div class="record-actions">
+                  <button type="button" class="record-btn-circle" id="toggleRecordBtn" title="Start Recording">
+                    <span class="rec-icon">●</span>
+                  </button>
+                  <button type="button" class="secondary-btn" id="pauseRecordBtn" hidden>Pause</button>
+                  <button type="button" class="secondary-btn cancel-rec-btn" id="cancelRecordBtn"
+                    hidden>Discard</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" class="primary-btn" id="transcribeBtn" disabled>
+              <span>🎙️</span>
+              Transcribe & Extract Commitments
+            </button>
+          </div>
+
+          <!-- Processing Pipeline Card -->
+          <div class="processing-card glass-card">
+            <div class="card-heading small">
+              <div>
+                <p class="eyebrow">EXECUTION PIPELINE</p>
+                <h3>Meeting Processing</h3>
+              </div>
+              <span class="pipeline-status" id="pipelineStatus">Ready</span>
+            </div>
+
+            <div class="pipeline">
+              <div class="pipeline-step completed" id="stepUpload">
+                <div class="step-number">✓</div>
+                <div>
+                  <strong>Audio Ready</strong>
+                  <span id="pipelineAudioNote">Awaiting audio source</span>
+                </div>
+              </div>
+              <div class="pipeline-line"></div>
+
+              <div class="pipeline-step" id="stepTranscript">
+                <div class="step-number">2</div>
+                <div>
+                  <strong>Whisper Speech-to-Text</strong>
+                  <span>Preserves segment timestamps</span>
+                </div>
+              </div>
+              <div class="pipeline-line"></div>
+
+              <div class="pipeline-step" id="stepCommitments">
+                <div class="step-number">3</div>
+                <div>
+                  <strong>Commitment Extraction</strong>
+                  <span>Decisions, actions & assignees</span>
+                </div>
+              </div>
+              <div class="pipeline-line"></div>
+
+              <div class="pipeline-step" id="stepReady">
+                <div class="step-number">4</div>
+                <div>
+                  <strong>Interactive Checklist Ready</strong>
+                  <span>Jump to timestamps in audio</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="privacy-box">
+              <div class="privacy-icon">🔒</div>
+              <div>
+                <strong>Local & Secure</strong>
+                <p>
+                  Transcripts and commitments are stored right here in your browser and processed locally.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Active Meeting Quick Access Card on Dashboard -->
+        <div class="active-meeting-banner glass-card" id="dashboardMeetingBanner" hidden style="margin-top:20px;">
+          <div class="banner-left">
+            <div class="banner-icon-badge">📄</div>
+            <div>
+              <p class="eyebrow">TRANSCRIPTION LOADED</p>
+              <h4 id="dashMeetingTitle">Meeting Recording</h4>
+              <p class="muted" id="dashMeetingStats">Duration: 00:00 · 0 words</p>
+            </div>
+          </div>
+          <div class="banner-actions">
+            <button type="button" class="primary-btn small" id="dashViewTranscriptBtn">
+              <span>📄</span> View Full Transcript →
+            </button>
+            <button type="button" class="secondary-btn" id="dashViewTrackerBtn">
+              <span>☑</span> Commitment Checklist
+            </button>
+            <button type="button" class="secondary-btn" id="dashAskAiBtn">
+              <span>🎙️</span> Ask AI
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 2: FULL MEETING TRANSCRIPT ================= -->
+      <section class="view-panel" id="viewStudio">
+        <div class="workspace" id="workspaceContainer">
+
+          <!-- Transcript Panel -->
+          <div class="transcript-panel glass-card">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">SPEECH INTELLIGENCE & AUDIO SYNCHRONIZATION</p>
+                <h3>Full Meeting Transcript</h3>
+              </div>
+              <div class="panel-controls">
+                <!-- View Mode Segmented Controls -->
+                <div class="view-mode-tabs" role="tablist">
+                  <button type="button" class="mode-pill active" id="tabDialogueView"
+                    title="Timestamped dialogue turns">💬 Dialogue</button>
+                  <button type="button" class="mode-pill" id="tabReadingView" title="Continuous readable paragraphs">📖
+                    Reading Mode</button>
+                  <button type="button" class="mode-pill" id="tabRawView" title="Plain unformatted transcript">📋 Raw
+                    Text</button>
+                </div>
+
+                <!-- Font Size Selector -->
+                <div class="font-size-ctrl" title="Change transcript font size">
+                  <button type="button" class="font-btn" id="fontDecBtn" title="Decrease font size">A-</button>
+                  <span id="fontSizeDisplay">100%</span>
+                  <button type="button" class="font-btn" id="fontIncBtn" title="Increase font size">A+</button>
+                </div>
+
+                <!-- Auto-scroll checkbox -->
+                <label class="toggle-control" title="Auto-scroll transcript to follow audio playback">
+                  <input type="checkbox" id="autoScrollToggle" checked>
+                  <span>Follow Audio</span>
+                </label>
+
+                <!-- Toggle Full Width layout -->
+                <button type="button" class="secondary-btn icon-btn" id="toggleExpandBtn"
+                  title="Toggle Full Width / Split View">
+                  <span id="expandIcon">⤢</span> <span id="expandText">Expand</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Metadata row -->
+            <div class="meeting-meta">
+              <div class="meta-item">
+                <span>RECORDING</span>
+                <strong id="meetingTitle">No meeting loaded</strong>
+              </div>
+              <div class="meta-item">
+                <span>DURATION</span>
+                <strong id="meetingDuration">—</strong>
+              </div>
+              <div class="meta-item">
+                <span>WORD COUNT</span>
+                <strong id="meetingWords">—</strong>
+              </div>
+              <div class="meta-item">
+                <span>SPEAKERS</span>
+                <strong id="meetingSpeakers">—</strong>
+              </div>
+              <div class="meta-item">
+                <span>EST. READING TIME</span>
+                <strong id="meetingReadingTime">—</strong>
+              </div>
+            </div>
+
+            <!-- Transcript search and action toolbar -->
+            <div class="transcript-toolbar">
+              <div class="transcript-search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="transcriptSearch" placeholder="Search entire meeting transcript...">
+                <button type="button" class="clear-search-btn" id="clearSearchBtn" hidden
+                  title="Clear search">×</button>
+                <span class="search-matches" id="searchCount"></span>
+              </div>
+
+              <div class="transcript-quick-actions">
+                <button type="button" class="secondary-btn" id="copyTranscript" title="Copy full transcript">
+                  <span>📋</span> Copy All
+                </button>
+                <button type="button" class="secondary-btn" id="exportTxtBtn" title="Download as text file">
+                  <span>📄</span> TXT
+                </button>
+                <button type="button" class="secondary-btn" id="exportSrtBtn"
+                  title="Download subtitles for video/audio">
+                  <span>🎬</span> SRT
+                </button>
+                <button type="button" class="secondary-btn accent" id="transcriptAskAiBtn"
+                  title="Ask AI questions about this meeting">
+                  <span></span> Ask AI
+                </button>
+              </div>
+            </div>
+
+            <!-- Interactive Transcript Container -->
+            <div class="transcript font-size-md" id="transcript">
+              <!-- Mode 1: Dialogue view -->
+              <div id="transcriptDialogueContainer" class="transcript-mode-container active">
+                <div class="empty-state">
+                  <div class="empty-icon">◫</div>
+                  <p>Your timestamped transcript will appear here. Click any timestamp to jump the audio.</p>
+                </div>
+              </div>
+
+              <!-- Mode 2: Full Continuous Reading view -->
+              <div id="transcriptReadingContainer" class="transcript-mode-container" hidden>
+                <!-- Injected via JS -->
+              </div>
+
+              <!-- Mode 3: Raw Text view -->
+              <div id="transcriptRawContainer" class="transcript-mode-container" hidden>
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Meeting Summary & Quick Decisions Sidecar -->
+          <div class="assistant-panel glass-card" id="studioSidecar">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">OVERVIEW</p>
+                <h3>Executive Digest</h3>
+              </div>
+              <div class="ai-badge" id="aiStatusBadge">● Local Intelligence</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-title">
+                <span>🎙️</span>
+                Meeting Summary & Highlights
+              </div>
+              <div id="summaryText">
+                <div class="empty-state">
+                  <div class="empty-icon">🎙️</div>
+                  <p>Upload a meeting to view concise summaries, key decisions, and action items.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Jump to Commitment Tracker CTA -->
+            <div class="tracker-shortcut-card">
+              <div class="shortcut-text">
+                <strong>Checklist & Decisions</strong>
+                <p>Review and claim action items linked to audio timestamps.</p>
+              </div>
+              <button type="button" class="secondary-btn accent" id="goToTrackerBtn">
+                Open Commitment Tracker →
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= VIEW 3: COMMITMENT TRACKER (STAR FEATURE) ================= -->
+      <section class="view-panel" id="viewTracker">
+        <div class="commitment-tracker-container glass-card">
+
+          <!-- Header with Metrics & Actions -->
+          <div class="tracker-header">
+            <div>
+              <p class="eyebrow">COMMITMENT TRACKER</p>
+              <h3>Meeting Decisions & Action Items</h3>
+              <p class="muted">
+                Interactive checklist for everyone in the meeting. Click any timestamp to hear the exact moment a
+                decision was made!
+              </p>
+            </div>
+
+            <div class="tracker-action-buttons">
+              <button type="button" class="secondary-btn" id="addCommitmentBtn">
+                <span>+</span> Add Custom Item
+              </button>
+              <button type="button" class="secondary-btn" id="copyChecklistBtn"
+                title="Copy as Markdown checklist for Slack/Notion/Jira">
+                <span>📋</span> Copy Checklist
+              </button>
+              <button type="button" class="secondary-btn" id="exportJsonBtn" title="Export as JSON">
+                <span>📥</span> Export JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Metrics Card -->
+          <div class="tracker-analytics-card">
+            <div class="progress-info-row">
+              <div class="metric-item">
+                <span class="metric-label">TOTAL ITEMS</span>
+                <strong class="metric-value" id="totalCommitmentsCount">0</strong>
+              </div>
+              <div class="metric-divider"></div>
+              <div class="metric-item">
+                <span class="metric-label">COMPLETED</span>
+                <strong class="metric-value completed" id="completedCommitmentsCount">0</strong>
+              </div>
+              <div class="metric-divider"></div>
+              <div class="metric-item">
+                <span class="metric-label">ACTIVE / PENDING</span>
+                <strong class="metric-value pending" id="pendingCommitmentsCount">0</strong>
+              </div>
+              <div class="metric-divider"></div>
+              <div class="metric-item">
+                <span class="metric-label">PROGRESS</span>
+                <strong class="metric-value highlight" id="progressPercentage">0%</strong>
+              </div>
+            </div>
+
+            <!-- Visual Progress Bar -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="tracker-toolbar">
+            <!-- Filter Tabs -->
+            <div class="filter-tabs" role="tablist">
+              <button type="button" class="filter-tab active" data-filter="all" id="filterAll">
+                All <span class="filter-count" id="countAll">0</span>
+              </button>
+              <button type="button" class="filter-tab" data-filter="active" id="filterActive">
+                Active <span class="filter-count" id="countActive">0</span>
+              </button>
+              <button type="button" class="filter-tab" data-filter="completed" id="filterCompleted">
+                Completed <span class="filter-count" id="countCompleted">0</span>
+              </button>
+              <button type="button" class="filter-tab" data-filter="high" id="filterHigh">
+                High Priority <span class="filter-count" id="countHigh">0</span>
+              </button>
+            </div>
+
+            <!-- Assignee Filter Dropdown -->
+            <div class="assignee-filter-wrapper">
+              <label for="assigneeFilterSelect">Assignee:</label>
+              <select id="assigneeFilterSelect" class="custom-select">
+                <option value="all">All Assignees</option>
+                <option value="Unassigned">Unassigned</option>
+              </select>
+            </div>
+
+            <!-- Search filter -->
+            <div class="tracker-search-box">
+              <span>🔍</span>
+              <input type="text" id="trackerSearchInput" placeholder="Filter commitments by keyword...">
+            </div>
+          </div>
+
+          <!-- Checklist List Container -->
+          <div class="commitments-checklist" id="commitmentsList">
+            <div class="empty-state">
+              <div class="empty-icon">☑</div>
+              <h4>No Commitments Loaded</h4>
+              <p>Upload a meeting recording or load a sample meeting to generate interactive commitments with audio
+                timestamps.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= VIEW 4: AI ASSISTANT ================= -->
+      <section class="view-panel" id="viewAssistant">
+        <div class="assistant-workspace glass-card">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">LOCAL INTELLIGENCE</p>
+              <h3>MeetMind AI Assistant</h3>
+            </div>
+            <div class="assistant-header-right">
+              <div class="model-badge-pill" id="assistantModelPill" title="Connected Local Model">
+                <span class="status-dot online"></span>
+                <span id="assistantModelName">Local qwen3-vl:4b</span>
+              </div>
+              <button type="button" class="secondary-btn" id="clearChatBtn">Clear History</button>
+            </div>
+          </div>
+
+          <div class="quick-section">
+            <span class="section-label">SUGGESTED QUESTIONS</span>
+            <div class="quick-buttons">
+              <button type="button">What were the key decisions made?</button>
+              <button type="button">List all action items and who is responsible</button>
+              <button type="button">Were any deadlines or timelines committed?</button>
+              <button type="button">Summarize the entire meeting in 3 bullet points</button>
+              <button type="button">Give me an executive briefing of this meeting</button>
+            </div>
+          </div>
+
+          <div class="chat-area" id="chatArea">
+            <div class="welcome-message">
+              <div class="ai-avatar">🎙️</div>
+              <div>
+                <strong>Ask me anything about your meeting.</strong>
+                <p>Powered by local <strong id="welcomeModelName"
+                    style="color:var(--cyan-accent);">qwen3-vl:4b</strong>. I reference exact timestamps [MM:SS] so you
+                  can click to verify any point in the audio recording.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-wrapper">
+            <div class="chat-input">
+              <input type="text" id="questionInput"
+                placeholder="Ask about decisions, assignees, deadlines, or summaries..." autocomplete="off">
+              <button type="button" id="askBtn" aria-label="Send">↑</button>
+            </div>
+            <div class="ai-footer">
+              <span class="lock-icon">🔒</span> 100% On-Device · Connected to Ollama <span
+                id="footerModelName">qwen3-vl:4b</span> · Click any timestamp in answers to jump audio.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL: ADD / EDIT COMMITMENT ================= -->
+  <dialog id="commitmentModal" class="commitment-modal glass-card">
+    <form id="commitmentForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Commitment</h3>
+        <button type="button" class="close-modal-btn" id="closeModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="modalItemText">Decision / Commitment *</label>
+          <textarea id="modalItemText" rows="3" required
+            placeholder="e.g. Prathamesh will finalize the API schema by Friday"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modalItemType">Type</label>
+            <select id="modalItemType" class="custom-select">
+              <option value="decision">Key Decision</option>
+              <option value="action_item" selected>Action Item</option>
+              <option value="deadline">Deadline / Target</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="modalItemPriority">Priority</label>
+            <select id="modalItemPriority" class="custom-select">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modalItemAssignee">Assignee</label>
+            <input type="text" id="modalItemAssignee" placeholder="e.g. Prathamesh, Alex, Team">
+          </div>
+
+          <div class="form-group">
+            <label for="modalItemDeadline">Deadline / Timeline</label>
+            <input type="text" id="modalItemDeadline" placeholder="e.g. Friday 5pm, Next sprint">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="modalItemTimestamp">Audio Timestamp (MM:SS)</label>
+          <input type="text" id="modalItemTimestamp" placeholder="01:23" pattern="[0-9]{1,2}:[0-9]{2}">
+          <span class="field-hint">Time where this item was discussed in the recording.</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="secondary-btn" id="cancelModalBtn">Cancel</button>
+        <button type="submit" class="primary-btn small" id="saveCommitmentBtn">Save Item</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Hidden Native Audio Element for synchronization -->
+  <audio id="globalAudioPlayer" preload="auto"></audio>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
