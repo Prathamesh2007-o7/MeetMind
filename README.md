@@ -6,7 +6,6 @@
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
 ![Whisper](https://img.shields.io/badge/OpenAI-Whisper-412991?logo=openai&logoColor=white)
 ![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
