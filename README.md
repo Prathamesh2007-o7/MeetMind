@@ -25,11 +25,6 @@
 
 ---
 
-## 🖥️ Screenshots
-
-> Upload a meeting → Get a full timestamped transcript, commitment checklist, and AI assistant — all in one workspace.
-
----
 
 ## 🛠️ Tech Stack
 
