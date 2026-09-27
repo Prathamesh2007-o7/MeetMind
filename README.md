@@ -2,11 +2,7 @@
 
 > **100% local, privacy-first AI meeting assistant.** Upload or record a meeting, get a full timestamped transcript, auto-extracted action items, and ask your local AI questions about the conversation.
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
-![Whisper](https://img.shields.io/badge/OpenAI-Whisper-412991?logo=openai&logoColor=white)
-![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
+
 
 ---
 
