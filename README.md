@@ -6,7 +6,7 @@
 
 ---
 
-## ✨ Features
+##  Features
 
 | Feature | Description |
 |---|---|
@@ -34,7 +34,7 @@
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Prerequisites
 
@@ -78,7 +78,7 @@ Open your browser at **http://127.0.0.1:5000**
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 MeetMind/
@@ -104,7 +104,7 @@ MeetMind/
 
 ---
 
-## 🧠 How It Works
+##  How It Works
 
 ```
 Audio File / Live Mic
@@ -126,7 +126,7 @@ Audio File / Live Mic
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Whisper Model Size
 
@@ -150,7 +150,7 @@ Any model that supports chat (`/api/chat`) works — `llama3`, `mistral`, `phi3`
 
 ---
 
-## 📦 Supported Audio / Video Formats
+##  Supported Audio / Video Formats
 
 `MP3` · `WAV` · `M4A` · `OGG` · `WEBM` · `MP4` · `FLAC` · `AAC`
 
@@ -158,7 +158,7 @@ Any model that supports chat (`/api/chat`) works — `llama3`, `mistral`, `phi3`
 
 ---
 
-## 🔒 Privacy
+##  Privacy
 
 - **No data leaves your machine.** Whisper runs locally, Ollama runs locally.
 - Transcripts and commitments are stored in your browser's `localStorage` only.
@@ -184,7 +184,7 @@ MIT © 2024 — Free to use, modify and distribute.
 
 ---
 
-## 🙏 Acknowledgements
+##  Acknowledgements
 
 - [OpenAI Whisper](https://github.com/openai/whisper) — open-source speech recognition
 - [Ollama](https://ollama.com/) — run LLMs locally with ease
